@@ -1,6 +1,16 @@
 # Project Setup
 
-## **1. Edit Configuration Files**
+## **1. Install Dependencies**
+Jalankan perintah berikut untuk menginstal semua dependency yang dibutuhkan:
+
+
+```sh
+git clone https://github.com/xninz007/4mb1ent.git
+cd 4mb1ent
+npm install
+```
+
+## **2. Edit Configuration Files**
 
 ### **.env File**
 Edit file `.env` dan masukkan private key wallet kamu. **Private key harus sama dengan private key pertama di `wallets.json`**.
@@ -21,15 +31,6 @@ Edit file `wallets.json` dan masukkan private key wallet kamu dalam format berik
 }
 ```
 
-## **2. Install Dependencies**
-Jalankan perintah berikut untuk menginstal semua dependency yang dibutuhkan:
-
-
-```sh
-git clone https://github.com/xninz007/4mb1ent.git
-cd 4mb1ent
-npm install
-```
 
 ## **3. Jalankan Program**
 Setelah konfigurasi selesai, jalankan program dengan perintah berikut:
