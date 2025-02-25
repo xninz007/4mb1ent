@@ -42,6 +42,5 @@ node index.js
 - Pastikan private key di `.env` sama dengan private key pertama di `wallets.json`.
 
   
-
-Selamat mencoba! 🚀
+## xNinz 2024
 
