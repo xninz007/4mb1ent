@@ -42,5 +42,5 @@ node index.js
 - Pastikan private key di `.env` sama dengan private key pertama di `wallets.json`.
 
   
-## xNinz 2024
+##- xNinz 2024 -
 
