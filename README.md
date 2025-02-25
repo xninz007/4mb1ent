@@ -44,7 +44,4 @@ node index.js
   
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-Copyright (c) 2025 xNinz
-
+This project is licensed under the MIT License - see the LICENSE file for [details](https://github.com/xninz007/4mb1ent/blob/main/LICENSE).
