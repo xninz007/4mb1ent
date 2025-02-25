@@ -42,5 +42,9 @@ node index.js
 - Pastikan private key di `.env` sama dengan private key pertama di `wallets.json`.
 
   
-##- xNinz 2024 -
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+Copyright (c) 2025 xNinz
 
