@@ -24,7 +24,10 @@ Edit file `wallets.json` dan masukkan private key wallet kamu dalam format berik
 ## **2. Install Dependencies**
 Jalankan perintah berikut untuk menginstal semua dependency yang dibutuhkan:
 
+
 ```sh
+git clone https://github.com/xninz007/4mb1ent.git
+cd 4mb1ent
 npm install
 ```
 
