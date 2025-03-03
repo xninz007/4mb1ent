@@ -36,19 +36,31 @@ async function getSwapEstimate(base, quote, qty, decimals) {
     console.log(`[${wibTime} WIB] 🔍 Menghitung estimasi swap di pool ${POOL_IDX}...`);
 
     try {
-        base = ethers.getAddress(base);
-        quote = ethers.getAddress(quote);
-
-        if (base.toLowerCase() > quote.toLowerCase()) {
-            console.log(`[${wibTime} WIB] ⚠️ Urutan base & quote salah, menukar posisi.`);
-            [base, quote] = [quote, base];
-        }
-
         const tip = 0;
         let limitPrice = ethers.parseUnits("10", 18); // Limit awal
 
+        // Estimasi gas dengan batas maksimum
+        let gasEstimate;
+        try {
+            gasEstimate = await crocImpact.calcImpact.estimateGas(
+                base, quote, POOL_IDX, true, true, qty, tip, limitPrice
+            );
+        } catch (err) {
+            console.log(`[${wibTime} WIB] ⚠️ Gagal mendapatkan estimasi gas, menggunakan default.`);
+            gasEstimate = ethers.toBigInt("200000"); // Pakai ethers.toBigInt() untuk ethers v6
+        }
+
+        // Batasi gas limit agar tidak melebihi batas maksimum jaringan
+        const maxGasLimit = ethers.toBigInt("500000"); // Pastikan angka dalam bentuk BigInt
+        const gasLimit = gasEstimate > maxGasLimit ? maxGasLimit : gasEstimate * 12n / 10n; // Buffer 20%
+
+        console.log(`[${wibTime} WIB] ⛽ Estimasi Gas: ${gasEstimate.toString()}`);
+        console.log(`[${wibTime} WIB] 🚀 Menggunakan Gas Limit: ${gasLimit.toString()}`);
+
+        // Eksekusi perhitungan swap dengan batasan gas
         const [baseFlow, quoteFlow, finalPrice] = await crocImpact.calcImpact(
-            base, quote, POOL_IDX, true, true, qty, tip, limitPrice
+            base, quote, POOL_IDX, true, true, qty, tip, limitPrice,
+            { gasLimit } // Menambahkan batas gas
         );
 
         console.log(`[${wibTime} WIB] ✅ Estimasi Berhasil!`);
@@ -90,8 +102,39 @@ async function swapMonadToToken(tokenSymbol, amountMonad, wallet) {
     const router = new ethers.Contract(ROUTER_ADDRESS, ROUTER_ABI, wallet.connect(provider));
 
     try {
+        // Estimasi gas berdasarkan transaksi
+        let estimatedGas;
+        try {
+            estimatedGas = await router.userCmd.estimateGas(
+                1,
+                ethers.AbiCoder.defaultAbiCoder().encode(
+                    ["address", "address", "uint256", "bool", "bool", "uint128", "uint16", "uint128", "uint128", "uint8"],
+                    [
+                        MONAD_ADDRESS, outputToken, POOL_IDX,
+                        true, true, qty, 0,
+                        limitPrice, minOut, 0
+                    ]
+                ),
+                { value: qty }
+            );
+        } catch (err) {
+            console.log(`[${wibTime} WIB] ⚠️ Gagal mendapatkan estimasi gas, menggunakan default.`);
+            estimatedGas = ethers.toBigInt("200000"); // Gunakan nilai default
+        }
+
+        // Batasi gas limit agar tidak melebihi batas jaringan
+        const maxGasLimit = ethers.toBigInt("500000"); // Batas maksimum gas
+        const gasLimit = estimatedGas > maxGasLimit ? maxGasLimit : estimatedGas * 12n / 10n; // Tambah buffer 20%
+
+        console.log(`[${wibTime} WIB] 🔍 Estimated Gas: ${estimatedGas.toString()}`);
+        console.log(`[${wibTime} WIB] 🚀 Menggunakan Gas Limit: ${gasLimit.toString()}`);
+
+        // Ambil gas price dengan cara yang benar di ethers v6
+        const feeData = await provider.getFeeData();
+        const gasPrice = feeData.gasPrice ?? ethers.parseUnits("52", "gwei"); // Jika null, gunakan default 52 gwei
+
         const tx = await router.userCmd(
-            1, 
+            1,
             ethers.AbiCoder.defaultAbiCoder().encode(
                 ["address", "address", "uint256", "bool", "bool", "uint128", "uint16", "uint128", "uint128", "uint8"],
                 [
@@ -100,12 +143,17 @@ async function swapMonadToToken(tokenSymbol, amountMonad, wallet) {
                     limitPrice, minOut, 0
                 ]
             ),
-            { value: qty, gasLimit: 750000, gasPrice: ethers.parseUnits("52", "gwei") }
+            { 
+                value: qty, 
+                gasLimit: gasLimit, // 🔥 Gunakan gas limit yang telah dibatasi 
+                gasPrice: gasPrice // 🔥 Ambil gas price yang valid
+            }
         );
 
         console.log(`[${wibTime} WIB] ✅ Swap Transaction Sent: ${tx.hash}`);
         await tx.wait();
-        console.log(`[${wibTime} WIB] 🎉 Swap Monad ke ${tokenSymbol} di Ambience Berhasil!`);
+        console.log(`[${wibTime} WIB] 🎉 Swap Monad ke ${tokenSymbol} Berhasil!`);
+    
     } catch (error) {
         console.error(`[${wibTime} WIB] ❌ Swap Gagal!`);
         console.error(`🔥 Error:`, error.message);
